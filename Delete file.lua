@@ -1,21 +1,19 @@
-local function deleteFiles()
-    local files = {
-        "systeme/jeux/snake",
-        "systeme/programme/calculatrice",
-        "systeme/programme/lecteur_mp3",
-        "systeme/programme/lecteur_video",
-        "systeme/delete.lua"
-    }
+local function deleteAll()
+    print("Suppression de tous les fichiers et dossiers installes...")
     
-    for _, file in ipairs(files) do
-        if fs.exists(file) then
-            fs.delete(file)
-            print("Fichier supprime : " .. file)
-        end
+    if fs.exists("systeme") then
+        fs.delete("systeme")
+        print("Dossier systeme supprime.")
+    else
+        print("Aucun dossier systeme trouve.")
     end
     
-    print("Tous les fichiers installes ont ete supprimes.")
+    if fs.exists("startup.lua") then
+        fs.delete("startup.lua")
+        print("startup.lua supprime.")
+    end
+    
+    print("Suppression terminee.")
 end
 
--- Execution du script
-deleteFiles()
+deleteAll()
