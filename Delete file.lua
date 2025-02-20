@@ -13,7 +13,9 @@ local function deleteAll()
         print("startup.lua supprime.")
     end
     
-    print("Suppression terminee.")
+    print("Suppression terminee. Redemarrage dans 2 secondes...")
+    sleep(2)
+    os.reboot()
 end
 
 deleteAll()
