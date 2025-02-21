@@ -1,0 +1,140 @@
+local width, height = term.getSize()
+
+local function update(text)
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
+    term.setCursorPos(1, 9)
+    term.clearLine()
+    term.setCursorPos(math.floor(width/2 - string.len(text)/2), 9)
+    write(text)
+end
+
+local function bar(ratio)
+    term.setBackgroundColor(colors.gray)
+    term.setTextColor(colors.lime)
+    term.setCursorPos(1, 11)
+
+    for i = 1, width do
+        if (i/width < ratio) then
+            write("]")
+        else
+            write(" ")
+        end
+    end
+end
+
+local function download(path, installDir)
+    local destination = installDir .. "/" .. path
+    update("Downloading " .. path .. "...")
+
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
+    term.setCursorPos(1, 13)
+    for i = 13, 17 do
+        term.setCursorPos(1, i)
+        term.clearLine()
+    end
+    term.setCursorPos(1, 13)
+
+    print("Accessing https://raw.githubusercontent.com/Xella37/CC-Minecraft/master/" .. path)
+    local rawData = http.get("https://raw.githubusercontent.com/Xella37/CC-Minecraft/master/" .. path)
+    if rawData then
+        local data = rawData.readAll()
+        rawData.close()
+        fs.makeDir(fs.getDir(destination)) -- Assure que le dossier existe
+        local file = fs.open(destination, "w")
+        file.write(data)
+        file.close()
+    else
+        print("Failed to download " .. path)
+    end
+end
+
+function install()
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.yellow)
+    term.clear()
+
+    local str = "CC:Minecraft Installer"
+    term.setCursorPos(math.floor(width/2 - #str / 2), 2)
+    write(str)
+
+    term.setCursorPos(1, 4)
+    write("Enter installation directory: ")
+    local installDir = read()
+
+    if installDir == "" then
+        installDir = "disk" -- Valeur par défaut
+    end
+
+    fs.makeDir(installDir)
+
+    local total = 21
+
+    update("Installing...")
+    bar(0)
+
+    download("Minecraft.lua", installDir)
+    bar(1/total)
+    download("Pine3D-minified.lua", installDir)
+    bar(2/total)
+    download("betterblittle.lua", installDir)
+    bar(3/total)
+    download("blittle", installDir)
+    bar(4/total)
+    download("noise.lua", installDir)
+    bar(5/total)
+    download("hotbar.nfp", installDir)
+    bar(6/total)
+    download("hotbarb.nfp", installDir)
+    bar(7/total)
+    download("logo.nfp", installDir)
+    bar(8/total)
+    download("hotbarb.nfp", installDir)
+    bar(9/total)
+    download("worldGradient.nfp", installDir)
+    bar(10/total)
+    download("controls.txt", installDir)
+    bar(11/total)
+    download("README.md", installDir)
+    bar(12/total)
+    download("LICENSE", installDir)
+    bar(13/total)
+
+    update("Creating models folder...")
+    fs.makeDir(installDir .. "/models")
+    bar(14/total)
+
+    download("models/dirt", installDir)
+    bar(15/total)
+    download("models/grass", installDir)
+    bar(16/total)
+    download("models/leaves", installDir)
+    bar(17/total)
+    download("models/sand", installDir)
+    bar(18/total)
+    download("models/stone", installDir)
+    bar(19/total)
+    download("models/water", installDir)
+    bar(20/total)
+    download("models/wood", installDir)
+    bar(21/total)
+
+    update("Installation finished!")
+
+    sleep(1)
+
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
+    term.clear()
+
+    term.setCursorPos(1, 1)
+    write("Finished installation!\nPress any key to close...")
+
+    os.pullEventRaw()
+
+    term.clear()
+    term.setCursorPos(1, 1)
+end
+
+install()
