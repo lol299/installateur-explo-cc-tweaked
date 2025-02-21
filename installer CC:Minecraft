@@ -9,6 +9,34 @@ local function update(text)
     write(text)
 end
 
+local function deleteFiles(installDir)
+    local files = {
+        "Minecraft.lua", "Pine3D-minified.lua", "betterblittle.lua", "blittle", "noise.lua",
+        "hotbar.nfp", "hotbarb.nfp", "logo.nfp", "worldGradient.nfp", "controls.txt",
+        "README.md", "LICENSE", "models/dirt", "models/grass", "models/leaves",
+        "models/sand", "models/stone", "models/water", "models/wood"
+    }
+
+    for _, file in ipairs(files) do
+        local path = installDir .. "/" .. file
+        if fs.exists(path) then
+            fs.delete(path)
+            print("Deleted: " .. path)
+        end
+    end
+
+    local modelsPath = installDir .. "/models"
+    if fs.exists(modelsPath) then
+        fs.delete(modelsPath)
+        print("Deleted folder: " .. modelsPath)
+    end
+
+    if fs.exists(installDir) then
+        fs.delete(installDir)
+        print("Deleted installation directory: " .. installDir)
+    end
+end
+
 local function bar(ratio)
     term.setBackgroundColor(colors.gray)
     term.setTextColor(colors.lime)
@@ -137,4 +165,18 @@ function install()
     term.setCursorPos(1, 1)
 end
 
-install()
+term.setCursorPos(1, 1)
+write("Do you want to install or uninstall? (install/uninstall): ")
+local choice = read()
+if choice == "install" then
+    install()
+elseif choice == "uninstall" then
+    term.write("Enter installation directory to remove: ")
+    local installDir = read()
+    if installDir ~= "" then
+        deleteFiles(installDir)
+        print("Uninstallation complete!")
+    else
+        print("Invalid directory!")
+    end
+end
