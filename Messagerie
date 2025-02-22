@@ -1,0 +1,65 @@
+-- Messagerie CC:Tweaked en Lua avec gestion des contacts
+local modem = peripheral.find("modem")
+if not modem then
+    print("Aucun modem détecté. Assurez-vous qu'un modem (filaire ou sans fil) est connecté.")
+    return
+end
+
+local channel = 42 -- Canal de communication par défaut
+modem.open(channel)
+print("Messagerie active sur le canal " .. channel)
+
+local contacts = {}
+
+local function ajouterContact(id, nom)
+    contacts[id] = nom
+    print("Contact ajouté : " .. nom .. " (" .. id .. ")")
+end
+
+local function afficherContacts()
+    print("--- Contacts ---")
+    for id, nom in pairs(contacts) do
+        print(id .. " : " .. nom)
+    end
+end
+
+local function envoyerMessage(dest, message)
+    modem.transmit(channel, channel, {dest = dest, msg = message, sender = os.getComputerID()})
+end
+
+local function recevoirMessage()
+    while true do
+        local event, side, ch, replyChannel, message, distance = os.pullEvent("modem_message")
+        if ch == channel and type(message) == "table" and message.dest == os.getComputerID() then
+            local senderName = contacts[message.sender] or "Inconnu"
+            print("\nMessage de " .. senderName .. " : " .. message.msg)
+        end
+    end
+end
+
+-- Thread d'écoute des messages
+parallel.waitForAny(recevoirMessage, function()
+    while true do
+        print("Options : 1. Envoyer message  2. Ajouter contact  3. Afficher contacts")
+        write("> ")
+        local choix = read()
+        
+        if choix == "1" then
+            write("ID du destinataire : ")
+            local dest = read()
+            write("Message : ")
+            local msg = read()
+            envoyerMessage(tonumber(dest), msg)
+        elseif choix == "2" then
+            write("ID du contact : ")
+            local id = tonumber(read())
+            write("Nom du contact : ")
+            local nom = read()
+            ajouterContact(id, nom)
+        elseif choix == "3" then
+            afficherContacts()
+        else
+            print("Option invalide.")
+        end
+    end
+end)
