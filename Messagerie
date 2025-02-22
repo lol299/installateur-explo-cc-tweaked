@@ -1,5 +1,4 @@
--- Messagerie CC:Tweaked en Lua avec interface cliquable et gestion des contacts
-local term = term or {}
+-- Messagerie CC:Tweaked en Lua avec interface cliquable, gestion des contacts et couleurs
 local modem = peripheral.find("modem")
 if not modem then
     print("Aucun modem détecté. Assurez-vous qu'un modem (filaire ou sans fil) est connecté.")
@@ -14,42 +13,62 @@ local contacts = {}
 local messages = {}
 local selectedContact = nil
 
+local function setTextColor(color)
+    if term.isColor() then
+        term.setTextColor(color)
+    end
+end
+
 local function ajouterContact(id, nom)
     contacts[id] = nom
     print("Contact ajouté : " .. nom .. " (" .. id .. ")")
+    afficherInterface()
 end
 
 local function afficherInterface()
     term.clear()
     term.setCursorPos(1, 1)
+    setTextColor(colors.yellow)
     print("--- Contacts & Messages Reçus ---")
     local y = 2
+    setTextColor(colors.white)
     for id, nom in pairs(contacts) do
         term.setCursorPos(1, y)
+        setTextColor(colors.lime)
         print("[" .. nom .. "]")
         y = y + 1
     end
     for id, msgs in pairs(messages) do
         if not contacts[id] then
             term.setCursorPos(1, y)
+            setTextColor(colors.red)
             print("[Inconnu (" .. id .. ")]")
             y = y + 1
         end
     end
     
+    term.setCursorPos(1, y + 1)
+    setTextColor(colors.blue)
+    print("[Ajouter Contact]")
+    
     term.setCursorPos(30, 1)
+    setTextColor(colors.yellow)
     print("--- Messages ---")
+    setTextColor(colors.white)
     if selectedContact and messages[selectedContact] then
         local msgY = 2
         for _, msg in ipairs(messages[selectedContact]) do
             term.setCursorPos(30, msgY)
+            setTextColor(colors.cyan)
             print(msg)
             msgY = msgY + 1
         end
     end
     
     term.setCursorPos(30, 18)
+    setTextColor(colors.green)
     print("[Taper message] > ")
+    setTextColor(colors.white)
 end
 
 local function envoyerMessage(dest, message)
@@ -99,7 +118,17 @@ local function selectionnerContact()
                 term.setCursorPos(30, 19)
                 local msg = read()
                 envoyerMessage(selectedContact, msg)
-            end
+        elseif y == 19 then
+            term.setCursorPos(1, 20)
+            setTextColor(colors.orange)
+            write("ID du contact : ")
+            setTextColor(colors.white)
+            local id = tonumber(read())
+            setTextColor(colors.orange)
+            write("Nom du contact : ")
+            setTextColor(colors.white)
+            local nom = read()
+            ajouterContact(id, nom)
         end
     end
 end
