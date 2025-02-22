@@ -1,4 +1,5 @@
--- Messagerie CC:Tweaked en Lua avec gestion des contacts
+-- Messagerie CC:Tweaked en Lua avec interface cliquable et gestion des contacts
+local term = require("term")
 local modem = peripheral.find("modem")
 if not modem then
     print("Aucun modem détecté. Assurez-vous qu'un modem (filaire ou sans fil) est connecté.")
@@ -10,56 +11,98 @@ modem.open(channel)
 print("Messagerie active sur le canal " .. channel)
 
 local contacts = {}
+local messages = {}
+local selectedContact = nil
 
 local function ajouterContact(id, nom)
     contacts[id] = nom
     print("Contact ajouté : " .. nom .. " (" .. id .. ")")
 end
 
-local function afficherContacts()
-    print("--- Contacts ---")
+local function afficherInterface()
+    term.clear()
+    term.setCursorPos(1, 1)
+    print("--- Contacts & Messages Reçus ---")
+    local y = 2
     for id, nom in pairs(contacts) do
-        print(id .. " : " .. nom)
+        term.setCursorPos(1, y)
+        print("[" .. nom .. "]")
+        y = y + 1
     end
+    for id, msgs in pairs(messages) do
+        if not contacts[id] then
+            term.setCursorPos(1, y)
+            print("[Inconnu (" .. id .. ")]")
+            y = y + 1
+        end
+    end
+    
+    term.setCursorPos(30, 1)
+    print("--- Messages ---")
+    if selectedContact and messages[selectedContact] then
+        local msgY = 2
+        for _, msg in ipairs(messages[selectedContact]) do
+            term.setCursorPos(30, msgY)
+            print(msg)
+            msgY = msgY + 1
+        end
+    end
+    
+    term.setCursorPos(30, 18)
+    print("[Taper message] > ")
 end
 
 local function envoyerMessage(dest, message)
     modem.transmit(channel, channel, {dest = dest, msg = message, sender = os.getComputerID()})
+    if not messages[dest] then messages[dest] = {} end
+    table.insert(messages[dest], "Vous: " .. message)
+    afficherInterface()
 end
 
 local function recevoirMessage()
     while true do
         local event, side, ch, replyChannel, message, distance = os.pullEvent("modem_message")
-        if ch == channel and type(message) == "table" and message.dest == os.getComputerID() then
-            local senderName = contacts[message.sender] or "Inconnu"
-            print("\nMessage de " .. senderName .. " : " .. message.msg)
+        if ch == channel and type(message) == "table" then
+            local sender = message.sender
+            if not messages[sender] then messages[sender] = {} end
+            table.insert(messages[sender], "Lui: " .. message.msg)
+            afficherInterface()
         end
     end
 end
 
--- Thread d'écoute des messages
-parallel.waitForAny(recevoirMessage, function()
+local function selectionnerContact()
     while true do
-        print("Options : 1. Envoyer message  2. Ajouter contact  3. Afficher contacts")
-        write("> ")
-        local choix = read()
-        
-        if choix == "1" then
-            write("ID du destinataire : ")
-            local dest = read()
-            write("Message : ")
-            local msg = read()
-            envoyerMessage(tonumber(dest), msg)
-        elseif choix == "2" then
-            write("ID du contact : ")
-            local id = tonumber(read())
-            write("Nom du contact : ")
-            local nom = read()
-            ajouterContact(id, nom)
-        elseif choix == "3" then
-            afficherContacts()
-        else
-            print("Option invalide.")
+        local event, button, x, y = os.pullEvent("mouse_click")
+        if y > 1 and y < 18 then
+            local index = y - 1
+            local count = 0
+            for id, _ in pairs(contacts) do
+                count = count + 1
+                if count == index then
+                    selectedContact = id
+                    break
+                end
+            end
+            for id, _ in pairs(messages) do
+                if not contacts[id] then
+                    count = count + 1
+                    if count == index then
+                        selectedContact = id
+                        break
+                    end
+                end
+            end
+            afficherInterface()
+        elseif y == 18 then
+            if selectedContact then
+                term.setCursorPos(30, 19)
+                local msg = read()
+                envoyerMessage(selectedContact, msg)
+            end
         end
     end
-end)
+end
+
+afficherInterface()
+parallel.waitForAny(recevoirMessage, selectionnerContact)
