@@ -1,5 +1,5 @@
 -- Messagerie CC:Tweaked en Lua avec interface cliquable et gestion des contacts
-local term = require("term")
+local term = term or {}
 local modem = peripheral.find("modem")
 if not modem then
     print("Aucun modem détecté. Assurez-vous qu'un modem (filaire ou sans fil) est connecté.")
